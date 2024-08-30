@@ -11,6 +11,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     widget->setLayout(layout);
     setCentralWidget(widget);
     resize(800, 600);
+    setMinimumSize(640, 480);
+    setMaximumSize(1280, 960);
+    setWindowTitle("Qt3D Viewport");
+    
 }
 
 MainWindow::~MainWindow() {}

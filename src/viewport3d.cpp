@@ -18,7 +18,7 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     // Set up the camera
     Qt3DRender::QCamera *camera = this->camera();
     camera->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0, 0, 10.0f));  // Adjust the Z value to zoom out
+    camera->setPosition(QVector3D(0, 0, 5.0f));  // Adjust the Z value to zoom out
     camera->setViewCenter(QVector3D(0, 0, 0));
 
     // Set up the camera controller
