@@ -3,9 +3,7 @@
 #include <QWidget>
 #include <QVBoxLayout>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-{
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     QWidget *container = QWidget::createWindowContainer(new Viewport3D);
     QVBoxLayout *layout = new QVBoxLayout;
     layout->addWidget(container);
@@ -14,8 +12,5 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(widget);
 }
 
-MainWindow::~MainWindow()
-{
-    // Add any cleanup code here
-}
+MainWindow::~MainWindow() {}
 

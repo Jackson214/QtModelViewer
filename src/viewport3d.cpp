@@ -5,14 +5,9 @@
 #include <Qt3DExtras/QPhongMaterial>
 #include <Qt3DExtras/QOrbitCameraController>
 
-Viewport3D::~Viewport3D()
-{
-    // Add any cleanup code here
-}
+Viewport3D::~Viewport3D() {}
 
-Viewport3D::Viewport3D(QWidget *parent)
-    : Qt3DExtras::Qt3DWindow()
-{
+Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     QWidget *container = QWidget::createWindowContainer(this, parent);
     auto *rootEntity = createScene();
 
@@ -25,8 +20,7 @@ Viewport3D::Viewport3D(QWidget *parent)
     layout->addWidget(container);
 }
 
-Qt3DCore::QEntity *Viewport3D::createScene()
-{
+Qt3DCore::QEntity *Viewport3D::createScene() {
     auto *rootEntity = new Qt3DCore::QEntity;
 
     auto *mesh = new Qt3DExtras::QCuboidMesh(rootEntity);
