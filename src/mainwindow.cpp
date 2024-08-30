@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     QWidget *widget = new QWidget;
     widget->setLayout(layout);
     setCentralWidget(widget);
+    resize(800, 600);
 }
 
 MainWindow::~MainWindow() {}
