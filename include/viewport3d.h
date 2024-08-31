@@ -1,6 +1,7 @@
 #pragma once
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QOrbitCameraController>
+#include <QColor>
 
 class Viewport3D : public Qt3DExtras::Qt3DWindow
 {
@@ -15,9 +16,11 @@ public:
 
 
 private:
-    Qt3DCore::QEntity *createScene();
-    void createPyramidEntity();
-    Qt3DCore::QEntity* createEntity(const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices);
+    void createScene(Qt3DCore::QEntity* parent);
+    void createPyramidEntity(Qt3DCore::QEntity* parent);
+    void createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, QColor color = QRgb(0x928327));
+    void createAxisLines(Qt3DCore::QEntity* parent);
+
     Qt3DRender::QCamera *mCamera;
     Qt3DExtras::QOrbitCameraController *mCamController;
     QWidget *mContainer;

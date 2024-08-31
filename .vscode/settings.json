@@ -66,6 +66,8 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "variant": "cpp",
-        "qorbitcameracontroller": "cpp"
+        "qorbitcameracontroller": "cpp",
+        "qvboxlayout": "cpp",
+        "qcamera": "cpp"
     }
 }

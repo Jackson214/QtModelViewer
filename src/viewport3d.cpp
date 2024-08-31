@@ -13,13 +13,15 @@
 #include <QVector3D>
 #include <QByteArray>
 #include <iostream>
+#include <QColor>
 
 Viewport3D::~Viewport3D() {}
 
 Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
+    auto *rootEntity = new Qt3DCore::QEntity;
     mContainer = QWidget::createWindowContainer(this, parent);
     mContainer->setFocusPolicy(Qt::StrongFocus);
-    auto *rootEntity = createScene();
+    createScene(rootEntity);
 
     setRootEntity(rootEntity);
 
@@ -39,23 +41,22 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     layout->addWidget(mContainer);
 }
 
-Qt3DCore::QEntity *Viewport3D::createScene() {
-    auto *rootEntity = new Qt3DCore::QEntity;
-
+void Viewport3D::createScene(Qt3DCore::QEntity* rootEntity) {
     // Default cube
-    // auto *mesh = new Qt3DExtras::QCuboidMesh(rootEntity);
-    // auto *material = new Qt3DExtras::QPhongMaterial(rootEntity);
-    // auto *shapeEntity = new Qt3DCore::QEntity(rootEntity);
+    // Qt3DCore::QEntity* cubeEntity = new Qt3DCore::QEntity(rootEntity);
+    // auto *mesh = new Qt3DExtras::QCuboidMesh(cubeEntity);
+    // auto *material = new Qt3DExtras::QPhongMaterial(cubeEntity);
+    // auto *shapeEntity = new Qt3DCore::QEntity(cubeEntity);
     // shapeEntity->addComponent(mesh);
     // shapeEntity->addComponent(material);
     // shapeEntity->setObjectName("cubeEntity");
 
-    createPyramidEntity();
+    createPyramidEntity(rootEntity);
+    createAxisLines(rootEntity);
 
-    return rootEntity;
 }
 
-void Viewport3D::createPyramidEntity() {
+void Viewport3D::createPyramidEntity(Qt3DCore::QEntity* parent) {
     // Define the vertices of the pyramid
     QVector<QVector3D> vertices = {
         { 0.0f,  1.0f,  0.0f}, // Top vertex
@@ -76,7 +77,7 @@ void Viewport3D::createPyramidEntity() {
     };
 
     // Create the pyramid entity
-    createEntity(vertices, indices);
+    createEntity(parent, vertices, indices);
 }
 
 void Viewport3D::moveCameraForward(float distance) {
@@ -118,8 +119,8 @@ void Viewport3D::moveCameraBackward(float distance) {
 }
 
 
-Qt3DCore::QEntity* Viewport3D::createEntity(const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices) {
-    Qt3DCore::QEntity* entity = new Qt3DCore::QEntity();
+void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, QColor color) {
+    Qt3DCore::QEntity* entity = new Qt3DCore::QEntity(parent);
 
     // Create geometry
     Qt3DCore::QGeometry* geometry = new Qt3DCore::QGeometry(entity);
@@ -179,7 +180,25 @@ Qt3DCore::QEntity* Viewport3D::createEntity(const QVector<QVector3D>& vertices, 
     // Add components to entity
     entity->addComponent(geometryRenderer);
     entity->addComponent(material);
-
-    return entity;
 }
 
+void Viewport3D::createAxisLines(Qt3DCore::QEntity* parent) {
+    struct Line {
+        QVector3D start;
+        QVector3D end;
+        QColor color;
+    };
+
+    QVector<Line> lines = {
+        {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, Qt::red},   // X-axis
+        {{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, Qt::green}, // Y-axis
+        {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, Qt::blue}   // Z-axis
+    };
+
+    for (const Line& line : lines) {
+        QVector<QVector3D> vertices = {line.start, line.end};
+        QVector<unsigned int> indices = {0, 1};
+
+        createEntity(parent, vertices, indices, line.color);
+    }
+}
