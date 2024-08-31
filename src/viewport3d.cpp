@@ -14,6 +14,9 @@
 #include <QByteArray>
 #include <iostream>
 #include <QColor>
+#include <Qt3DRender/QRenderStateSet>
+#include <Qt3DRender/QDepthTest>
+#include <Qt3DRender/QCullFace>
 
 Viewport3D::~Viewport3D() {}
 
@@ -35,13 +38,24 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     mCamController = new Qt3DExtras::QOrbitCameraController(rootEntity);
     mCamController->setCamera(mCamera);
     mCamController->setLinearSpeed(10.0f);
-    mCamController->setLookSpeed(90.0f);
+    mCamController->setLookSpeed(180.0f);
 
     QVBoxLayout *layout = new QVBoxLayout(parent);
     layout->addWidget(mContainer);
 }
 
 void Viewport3D::createScene(Qt3DCore::QEntity* rootEntity) {
+    // Enable depth testing
+    auto *renderStateSet = new Qt3DRender::QRenderStateSet(rootEntity);
+    auto *depthTest = new Qt3DRender::QDepthTest();
+    depthTest->setDepthFunction(Qt3DRender::QDepthTest::Less);
+    renderStateSet->addRenderState(depthTest);
+
+    // Enable face culling
+    auto *cullFace = new Qt3DRender::QCullFace();
+    cullFace->setMode(Qt3DRender::QCullFace::Back);
+    renderStateSet->addRenderState(cullFace);
+
     // Default cube
     // Qt3DCore::QEntity* cubeEntity = new Qt3DCore::QEntity(rootEntity);
     // auto *mesh = new Qt3DExtras::QCuboidMesh(cubeEntity);
@@ -130,60 +144,66 @@ void Viewport3D::moveCameraBackward(float distance) {
 
 
 void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, const QVector<QColor>& colors) {
-    Qt3DCore::QEntity* createdEntity = new Qt3DCore::QEntity(parent);
-    auto *geometry = new Qt3DCore::QGeometry(createdEntity);
+    auto *newObject = new Qt3DCore::QEntity(parent);
+    for (int i = 0; i < indices.size(); i++) {
+        auto *face = new Qt3DCore::QEntity(newObject);
+        auto *geometry = new Qt3DCore::QGeometry(face);
 
-    QByteArray vertexData;
-    vertexData.resize(vertices.size() * 3 * sizeof(float));
-    float *vertexDataPtr = reinterpret_cast<float*>(vertexData.data());
-    for (const QVector3D &vertex : vertices) {
-        *vertexDataPtr++ = vertex.x();
-        *vertexDataPtr++ = vertex.y();
-        *vertexDataPtr++ = vertex.z();
-    }
+        // Create vertex data for the current face
+        QByteArray vertexData;
+        vertexData.resize(3 * 3 * sizeof(float)); // 3 vertices per face, 3 coordinates per vertex
+        float *vertexDataPtr = reinterpret_cast<float*>(vertexData.data());
+        for (int j = 0; j < 3; ++j) {
+            const QVector3D &vertex = vertices[indices[i + j]];
+            *vertexDataPtr++ = vertex.x();
+            *vertexDataPtr++ = vertex.y();
+            *vertexDataPtr++ = vertex.z();
+        }
 
-    auto *vertexBuffer = new Qt3DCore::QBuffer(geometry);
-    vertexBuffer->setData(vertexData);
+        auto *vertexBuffer = new Qt3DCore::QBuffer(geometry);
+        vertexBuffer->setData(vertexData);
 
-    auto *positionAttribute = new Qt3DCore::QAttribute();
-    positionAttribute->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
-    positionAttribute->setVertexBaseType(Qt3DCore::QAttribute::Float);
-    positionAttribute->setVertexSize(3);
-    positionAttribute->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
-    positionAttribute->setBuffer(vertexBuffer);
-    positionAttribute->setByteStride(3 * sizeof(float));
-    positionAttribute->setCount(vertices.size());
+        auto *positionAttribute = new Qt3DCore::QAttribute();
+        positionAttribute->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
+        positionAttribute->setVertexBaseType(Qt3DCore::QAttribute::Float);
+        positionAttribute->setVertexSize(3);
+        positionAttribute->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+        positionAttribute->setBuffer(vertexBuffer);
+        positionAttribute->setByteStride(3 * sizeof(float));
+        positionAttribute->setCount(3);
 
-    QByteArray indexData;
-    indexData.resize(indices.size() * sizeof(unsigned int));
-    unsigned int *indexDataPtr = reinterpret_cast<unsigned int*>(indexData.data());
-    for (unsigned int index : indices) {
-        *indexDataPtr++ = index;
-    }
+        // Create index data for the current face
+        QByteArray indexData;
+        indexData.resize(3 * sizeof(unsigned int)); // 3 indices per face
+        unsigned int *indexDataPtr = reinterpret_cast<unsigned int*>(indexData.data());
+        for (int j = 0; j < 3; ++j) {
+            *indexDataPtr++ = j;
+        }
 
-    auto *indexBuffer = new Qt3DCore::QBuffer(geometry);
-    indexBuffer->setData(indexData);
+        auto *indexBuffer = new Qt3DCore::QBuffer(geometry);
+        indexBuffer->setData(indexData);
 
-    auto *indexAttribute = new Qt3DCore::QAttribute();
-    indexAttribute->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
-    indexAttribute->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
-    indexAttribute->setBuffer(indexBuffer);
-    indexAttribute->setCount(indices.size());
+        auto *indexAttribute = new Qt3DCore::QAttribute();
+        indexAttribute->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
+        indexAttribute->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
+        indexAttribute->setBuffer(indexBuffer);
+        indexAttribute->setCount(3);
 
-    geometry->addAttribute(positionAttribute);
-    geometry->addAttribute(indexAttribute);
+        geometry->addAttribute(positionAttribute);
+        geometry->addAttribute(indexAttribute);
 
-    auto *geometryRenderer = new Qt3DRender::QGeometryRenderer(createdEntity);
-    geometryRenderer->setGeometry(geometry);
-    geometryRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
+        auto *geometryRenderer = new Qt3DRender::QGeometryRenderer(face);
+        geometryRenderer->setGeometry(geometry);
+        geometryRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
 
-    for (int i = 0; i < indices.size(); i += 3) {
-        auto *material = new Qt3DExtras::QPhongMaterial(createdEntity);
-        material->setDiffuse(colors[i / 3]);
+        auto *material = new Qt3DExtras::QPhongMaterial(face);
+        material->setAmbient(colors[i/3]);  // Set ambient color
+        material->setDiffuse(colors[i/3]);
+        material->setSpecular(Qt::gray); // Set specular color
+        material->setShininess(50.0f);   // Set shininess for specular highlights
 
-        auto *entity = new Qt3DCore::QEntity(createdEntity);
-        entity->addComponent(geometryRenderer);
-        entity->addComponent(material);
+        face->addComponent(geometryRenderer);
+        face->addComponent(material);
     }
 }
 
