@@ -18,6 +18,8 @@ public:
 private:
     void createScene(Qt3DCore::QEntity* parent);
     void createPyramidEntity(Qt3DCore::QEntity* parent);
+    
+    // Indices should be defined in counter-clockwise order to determine which direction the face is facing
     void createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, QColor color = QRgb(0x928327));
     void createAxisLines(Qt3DCore::QEntity* parent);
 

@@ -72,8 +72,8 @@ void Viewport3D::createPyramidEntity(Qt3DCore::QEntity* parent) {
         0, 2, 3, // Right face
         0, 3, 4, // Back face
         0, 4, 1, // Left face
-        1, 2, 3, // Base face (first triangle)
-        1, 3, 4  // Base face (second triangle)
+        1, 3, 2, // Base face (first triangle)
+        1, 4, 3  // Base face (second triangle)
     };
 
     // Create the pyramid entity
