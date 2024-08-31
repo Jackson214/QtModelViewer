@@ -6,6 +6,7 @@
 #include <Qt3DExtras/QPhongMaterial>
 #include <Qt3DRender/QCamera>
 #include <QKeyEvent>
+#include <iostream>
 
 Viewport3D::~Viewport3D() {}
 
@@ -25,8 +26,8 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     // Set up the camera controller
     mCamController = new Qt3DExtras::QOrbitCameraController(rootEntity);
     mCamController->setCamera(mCamera);
-    mCamController->setLinearSpeed(50.0f);
-    mCamController->setLookSpeed(10.0f);
+    mCamController->setLinearSpeed(10.0f);
+    mCamController->setLookSpeed(90.0f);
 
     QVBoxLayout *layout = new QVBoxLayout(parent);
     layout->addWidget(mContainer);
@@ -61,6 +62,10 @@ void Viewport3D::moveCameraForward(float distance) {
 
     // Set the new position of the camera
     mCamera->setPosition(position);
+
+    std::cout << "Setting View Center" << std::endl;
+    std::cout << "Camera position: " << position.x() << ", " << position.y() << ", " << position.z() << std::endl;
+    mCamera->setViewCenter(QVector3D(0, 0, 0));
 }
 
 void Viewport3D::moveCameraBackward(float distance) {
@@ -76,5 +81,9 @@ void Viewport3D::moveCameraBackward(float distance) {
 
     // Set the new position of the camera
     mCamera->setPosition(position);
+
+    std::cout << "Setting View Center" << std::endl;
+    std::cout << "Camera position: " << position.x() << ", " << position.y() << ", " << position.z() << std::endl;
+    mCamera->setViewCenter(QVector3D(0, 0, 0));
 }
 

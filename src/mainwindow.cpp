@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <iostream>
+#include <Qt3DRender/QCamera>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     mViewport = new Viewport3D;
@@ -42,6 +43,57 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             }
         }
     }
+    // else if (event->type() == QEvent::MouseButtonPress) {
+    //     QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent *>(event);
+    //     if (mouseEvent) {
+    //         if (mouseEvent->button() == Qt::LeftButton) {
+    //             mHoldingLeftClick = true;
+    //             return true;  // Indicate that the event has been handled
+    //         }
+    //         else if (mouseEvent->button() == Qt::RightButton) {
+    //             mHoldingRightClick = true;
+    //             return true;  // Indicate that the event has been handled
+    //         }
+    //     }
+    // }
+    // else if (event->type() == QEvent::MouseButtonRelease) {
+    //     QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent *>(event);
+    //     if (mouseEvent) {
+    //         if (mouseEvent->button() == Qt::LeftButton) {
+    //             mHoldingLeftClick = false;
+    //             return true;  // Indicate that the event has been handled
+    //         }
+    //         else if (mouseEvent->button() == Qt::RightButton) {
+    //             mHoldingRightClick = false;
+    //             return true;  // Indicate that the event has been handled
+    //         }
+    //     }
+    // }
+    // else if (event->type() == QEvent::MouseMove)
+    // {
+    //     QMouseEvent *mouseEvent = dynamic_cast<QMouseEvent *>(event);
+    //     if (mouseEvent && mHoldingLeftClick) {
+    //         static QPoint lastMousePosition = mouseEvent->pos();
+
+    //         // Calculate the delta movement
+    //         QPoint delta = mouseEvent->pos() - lastMousePosition;
+    //         lastMousePosition = mouseEvent->pos();
+
+    //         // Get the current view center
+    //         QVector3D viewCenter = mViewport->camera()->viewCenter();
+
+    //         // Adjust the view center based on the mouse movement
+    //         float sensitivity = 0.01f; // Adjust sensitivity as needed
+    //         viewCenter.setX(viewCenter.x() + delta.x() * sensitivity);
+    //         viewCenter.setY(viewCenter.y() - delta.y() * sensitivity); // Invert Y axis if needed
+
+    //         // Update the camera's view center
+    //         mViewport->camera()->setViewCenter(viewCenter);
+
+    //         qDebug() << "New View Center: " << viewCenter.x() << ", " << viewCenter.y() << ", " << viewCenter.z();
+    //         return true;  // Indicate that the event has been handled
+    //     }
+    // }
     return QObject::eventFilter(obj, event);
 }
 

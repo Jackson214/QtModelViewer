@@ -17,6 +17,8 @@ protected:
 
 private:
     Viewport3D *mViewport;
+    bool mHoldingLeftClick = false;
+    bool mHoldingRightClick = false;
 };
 
 #endif // MAINWINDOW_H
