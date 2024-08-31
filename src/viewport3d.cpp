@@ -17,6 +17,7 @@
 #include <Qt3DRender/QRenderStateSet>
 #include <Qt3DRender/QDepthTest>
 #include <Qt3DRender/QCullFace>
+#include <QLineWidth>
 
 Viewport3D::~Viewport3D() {}
 
@@ -57,7 +58,7 @@ void Viewport3D::createScene(Qt3DCore::QEntity* rootEntity) {
     renderStateSet->addRenderState(cullFace);
 
     createPyramidEntity(rootEntity);
-    // createAxisLines(rootEntity);
+    createAxisLines(rootEntity);
 
 }
 
@@ -199,22 +200,84 @@ void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D
 }
 
 void Viewport3D::createAxisLines(Qt3DCore::QEntity* parent) {
-//     struct Line {
-//         QVector3D start;
-//         QVector3D end;
-//         QColor color;
-//     };
+    auto *newObject = new Qt3DCore::QEntity(parent);
+    // Define the vertices for the axis lines
+    QVector<QVector3D> vertices = {
+        {0.0f, 0.0f, 0.0f}, {3.0f, 0.0f, 0.0f}, // X-axis
+        {0.0f, 0.0f, 0.0f}, {0.0f, 3.0f, 0.0f}, // Y-axis
+        {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 3.0f}  // Z-axis
+    };
 
-//     QVector<Line> lines = {
-//         {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, Qt::red},   // X-axis
-//         {{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, Qt::green}, // Y-axis
-//         {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, Qt::blue}   // Z-axis
-//     };
+    // Define the colors for the axis lines
+    QVector<QColor> colors = {
+        Qt::red, Qt::red,   // X-axis
+        Qt::green, Qt::green, // Y-axis
+        Qt::blue, Qt::blue  // Z-axis
+    };
 
-//     for (const Line& line : lines) {
-//         QVector<QVector3D> vertices = {line.start, line.end};
-//         QVector<unsigned int> indices = {0, 1};
+    // Create a geometry object
+    auto *geometry = new Qt3DCore::QGeometry(newObject);
 
-//         createEntity(parent, vertices, indices, line.color);
-//     }
+    // Create a buffer for the vertices
+    QByteArray vertexData;
+    vertexData.resize(vertices.size() * 3 * sizeof(float));
+    float *vertexDataPtr = reinterpret_cast<float*>(vertexData.data());
+    for (const QVector3D &vertex : vertices) {
+        *vertexDataPtr++ = vertex.x();
+        *vertexDataPtr++ = vertex.y();
+        *vertexDataPtr++ = vertex.z();
+    }
+
+    auto *vertexBuffer = new Qt3DCore::QBuffer(geometry);
+    vertexBuffer->setData(vertexData);
+
+    // Create a buffer for the colors
+    QByteArray colorData;
+    colorData.resize(colors.size() * 3 * sizeof(float));
+    float *colorDataPtr = reinterpret_cast<float*>(colorData.data());
+    for (const QColor &color : colors) {
+        *colorDataPtr++ = color.redF();
+        *colorDataPtr++ = color.greenF();
+        *colorDataPtr++ = color.blueF();
+    }
+
+    auto *colorBuffer = new Qt3DCore::QBuffer(geometry);
+    colorBuffer->setData(colorData);
+
+    // Create the position attribute
+    auto *positionAttribute = new Qt3DCore::QAttribute();
+    positionAttribute->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
+    positionAttribute->setVertexBaseType(Qt3DCore::QAttribute::Float);
+    positionAttribute->setVertexSize(3);
+    positionAttribute->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+    positionAttribute->setBuffer(vertexBuffer);
+    positionAttribute->setByteStride(3 * sizeof(float));
+    positionAttribute->setCount(vertices.size());
+
+    // Create the color attribute
+    auto *colorAttribute = new Qt3DCore::QAttribute();
+    colorAttribute->setName(Qt3DCore::QAttribute::defaultColorAttributeName());
+    colorAttribute->setVertexBaseType(Qt3DCore::QAttribute::Float);
+    colorAttribute->setVertexSize(3);
+    colorAttribute->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+    colorAttribute->setBuffer(colorBuffer);
+    colorAttribute->setByteStride(3 * sizeof(float));
+    colorAttribute->setCount(colors.size());
+
+    // Add the attributes to the geometry
+    geometry->addAttribute(positionAttribute);
+    geometry->addAttribute(colorAttribute);
+
+    // Create a geometry renderer
+    auto *geometryRenderer = new Qt3DRender::QGeometryRenderer(newObject);
+    geometryRenderer->setGeometry(geometry);
+    geometryRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Lines);
+
+    // Create a material
+    auto *material = new Qt3DExtras::QPhongMaterial(newObject);
+
+    // Create an entity and add the components
+    auto *entity = new Qt3DCore::QEntity(newObject);
+    entity->addComponent(geometryRenderer);
+    entity->addComponent(material);
 }
