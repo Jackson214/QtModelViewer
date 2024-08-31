@@ -56,15 +56,6 @@ void Viewport3D::createScene(Qt3DCore::QEntity* rootEntity) {
     cullFace->setMode(Qt3DRender::QCullFace::Back);
     renderStateSet->addRenderState(cullFace);
 
-    // Default cube
-    // Qt3DCore::QEntity* cubeEntity = new Qt3DCore::QEntity(rootEntity);
-    // auto *mesh = new Qt3DExtras::QCuboidMesh(cubeEntity);
-    // auto *material = new Qt3DExtras::QPhongMaterial(cubeEntity);
-    // auto *shapeEntity = new Qt3DCore::QEntity(cubeEntity);
-    // shapeEntity->addComponent(mesh);
-    // shapeEntity->addComponent(material);
-    // shapeEntity->setObjectName("cubeEntity");
-
     createPyramidEntity(rootEntity);
     // createAxisLines(rootEntity);
 
@@ -145,7 +136,7 @@ void Viewport3D::moveCameraBackward(float distance) {
 
 void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, const QVector<QColor>& colors) {
     auto *newObject = new Qt3DCore::QEntity(parent);
-    for (int i = 0; i < indices.size(); i++) {
+    for (int i = 0; i < (indices.size()/3); i++) {
         auto *face = new Qt3DCore::QEntity(newObject);
         auto *geometry = new Qt3DCore::QGeometry(face);
 
@@ -153,8 +144,8 @@ void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D
         QByteArray vertexData;
         vertexData.resize(3 * 3 * sizeof(float)); // 3 vertices per face, 3 coordinates per vertex
         float *vertexDataPtr = reinterpret_cast<float*>(vertexData.data());
-        for (int j = 0; j < 3; ++j) {
-            const QVector3D &vertex = vertices[indices[i + j]];
+        for (int j = 0; j < 3; j++) {
+            const QVector3D &vertex = vertices[indices[(i*3) + j]];
             *vertexDataPtr++ = vertex.x();
             *vertexDataPtr++ = vertex.y();
             *vertexDataPtr++ = vertex.z();
@@ -176,7 +167,7 @@ void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D
         QByteArray indexData;
         indexData.resize(3 * sizeof(unsigned int)); // 3 indices per face
         unsigned int *indexDataPtr = reinterpret_cast<unsigned int*>(indexData.data());
-        for (int j = 0; j < 3; ++j) {
+        for (int j = 0; j < 3; j++) {
             *indexDataPtr++ = j;
         }
 
@@ -197,8 +188,8 @@ void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D
         geometryRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
 
         auto *material = new Qt3DExtras::QPhongMaterial(face);
-        material->setAmbient(colors[i/3]);  // Set ambient color
-        material->setDiffuse(colors[i/3]);
+        material->setAmbient(colors[i]);  // Set ambient color
+        material->setDiffuse(colors[i]);
         material->setSpecular(Qt::gray); // Set specular color
         material->setShininess(50.0f);   // Set shininess for specular highlights
 
