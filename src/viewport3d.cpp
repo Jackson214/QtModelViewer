@@ -6,6 +6,12 @@
 #include <Qt3DExtras/QPhongMaterial>
 #include <Qt3DRender/QCamera>
 #include <QKeyEvent>
+#include <Qt3DCore/QGeometry>
+#include <Qt3DRender/QGeometryRenderer>
+#include <Qt3DCore/QAttribute>
+#include <Qt3DCore/QBuffer>
+#include <QVector3D>
+#include <QByteArray>
 #include <iostream>
 
 Viewport3D::~Viewport3D() {}
@@ -36,17 +42,22 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
 Qt3DCore::QEntity *Viewport3D::createScene() {
     auto *rootEntity = new Qt3DCore::QEntity;
 
-    auto *mesh = new Qt3DExtras::QCuboidMesh(rootEntity);
-    auto *material = new Qt3DExtras::QPhongMaterial(rootEntity);
+    // Default cube
+    // auto *mesh = new Qt3DExtras::QCuboidMesh(rootEntity);
+    // auto *material = new Qt3DExtras::QPhongMaterial(rootEntity);
+    // auto *shapeEntity = new Qt3DCore::QEntity(rootEntity);
+    // shapeEntity->addComponent(mesh);
+    // shapeEntity->addComponent(material);
+    // shapeEntity->setObjectName("cubeEntity");
 
-    auto *shapeEntity = new Qt3DCore::QEntity(rootEntity);
-    shapeEntity->addComponent(mesh);
-    shapeEntity->addComponent(material);
-
-    // Name the cube entity - so we can reference it elsewhere
-    shapeEntity->setObjectName("cubeEntity");
+    Qt3DCore::QEntity *pyramidEntity = createPyramidEntity(rootEntity);
+    pyramidEntity->setObjectName("pyramidEntity");
 
     return rootEntity;
+}
+
+Qt3DCore::QEntity* Viewport3D::createPyramidEntity(Qt3DCore::QEntity *rootEntity) {
+   
 }
 
 void Viewport3D::moveCameraForward(float distance) {

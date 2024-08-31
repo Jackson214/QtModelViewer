@@ -15,7 +15,8 @@ public:
 
 
 private:
-    Qt3DCore::QEntity *createScene();  // Declare createScene here
+    Qt3DCore::QEntity *createScene();
+    Qt3DCore::QEntity* createPyramidEntity(Qt3DCore::QEntity *rootEntity);
     Qt3DRender::QCamera *mCamera;
     Qt3DExtras::QOrbitCameraController *mCamController;
     QWidget *mContainer;
