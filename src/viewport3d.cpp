@@ -52,7 +52,7 @@ void Viewport3D::createScene(Qt3DCore::QEntity* rootEntity) {
     // shapeEntity->setObjectName("cubeEntity");
 
     createPyramidEntity(rootEntity);
-    createAxisLines(rootEntity);
+    // createAxisLines(rootEntity);
 
 }
 
@@ -76,8 +76,18 @@ void Viewport3D::createPyramidEntity(Qt3DCore::QEntity* parent) {
         1, 4, 3  // Base face (second triangle)
     };
 
+    // Define the colors for each face
+    QVector<QColor> colors = {
+        Qt::red,    // Front face
+        Qt::green,  // Right face
+        Qt::blue,   // Back face
+        Qt::yellow, // Left face
+        Qt::cyan,   // Base face (first triangle)
+        Qt::magenta // Base face (second triangle)
+    };
+
     // Create the pyramid entity
-    createEntity(parent, vertices, indices);
+    createEntity(parent, vertices, indices, colors);
 }
 
 void Viewport3D::moveCameraForward(float distance) {
@@ -119,86 +129,81 @@ void Viewport3D::moveCameraBackward(float distance) {
 }
 
 
-void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, QColor color) {
-    Qt3DCore::QEntity* entity = new Qt3DCore::QEntity(parent);
+void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, const QVector<QColor>& colors) {
+    Qt3DCore::QEntity* createdEntity = new Qt3DCore::QEntity(parent);
+    auto *geometry = new Qt3DCore::QGeometry(createdEntity);
 
-    // Create geometry
-    Qt3DCore::QGeometry* geometry = new Qt3DCore::QGeometry(entity);
-
-    // Create vertex data buffer
-    QByteArray vertexBufferData;
-    vertexBufferData.resize(vertices.size() * 3 * sizeof(float));
-    float* rawVertexArray = reinterpret_cast<float*>(vertexBufferData.data());
-    for (int i = 0; i < vertices.size(); ++i) {
-        *rawVertexArray++ = vertices[i].x();
-        *rawVertexArray++ = vertices[i].y();
-        *rawVertexArray++ = vertices[i].z();
+    QByteArray vertexData;
+    vertexData.resize(vertices.size() * 3 * sizeof(float));
+    float *vertexDataPtr = reinterpret_cast<float*>(vertexData.data());
+    for (const QVector3D &vertex : vertices) {
+        *vertexDataPtr++ = vertex.x();
+        *vertexDataPtr++ = vertex.y();
+        *vertexDataPtr++ = vertex.z();
     }
 
-    Qt3DCore::QBuffer* vertexDataBuffer = new Qt3DCore::QBuffer(geometry);
-    vertexDataBuffer->setData(vertexBufferData);
+    auto *vertexBuffer = new Qt3DCore::QBuffer(geometry);
+    vertexBuffer->setData(vertexData);
 
-    Qt3DCore::QAttribute* positionAttribute = new Qt3DCore::QAttribute();
+    auto *positionAttribute = new Qt3DCore::QAttribute();
     positionAttribute->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
     positionAttribute->setVertexBaseType(Qt3DCore::QAttribute::Float);
     positionAttribute->setVertexSize(3);
     positionAttribute->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
-    positionAttribute->setBuffer(vertexDataBuffer);
+    positionAttribute->setBuffer(vertexBuffer);
     positionAttribute->setByteStride(3 * sizeof(float));
     positionAttribute->setCount(vertices.size());
 
-    // Create index data buffer
-    QByteArray indexBufferData;
-    indexBufferData.resize(indices.size() * sizeof(unsigned int));
-    unsigned int* rawIndexArray = reinterpret_cast<unsigned int*>(indexBufferData.data());
-    for (int i = 0; i < indices.size(); ++i) {
-        *rawIndexArray++ = indices[i];
+    QByteArray indexData;
+    indexData.resize(indices.size() * sizeof(unsigned int));
+    unsigned int *indexDataPtr = reinterpret_cast<unsigned int*>(indexData.data());
+    for (unsigned int index : indices) {
+        *indexDataPtr++ = index;
     }
 
-    Qt3DCore::QBuffer* indexDataBuffer = new Qt3DCore::QBuffer(geometry);
-    indexDataBuffer->setData(indexBufferData);
+    auto *indexBuffer = new Qt3DCore::QBuffer(geometry);
+    indexBuffer->setData(indexData);
 
-    Qt3DCore::QAttribute* indexAttribute = new Qt3DCore::QAttribute();
+    auto *indexAttribute = new Qt3DCore::QAttribute();
     indexAttribute->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
     indexAttribute->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
-    indexAttribute->setBuffer(indexDataBuffer);
+    indexAttribute->setBuffer(indexBuffer);
     indexAttribute->setCount(indices.size());
 
-    // Add attributes to geometry
     geometry->addAttribute(positionAttribute);
     geometry->addAttribute(indexAttribute);
 
-    // Create geometry renderer
-    Qt3DRender::QGeometryRenderer* geometryRenderer = new Qt3DRender::QGeometryRenderer();
+    auto *geometryRenderer = new Qt3DRender::QGeometryRenderer(createdEntity);
     geometryRenderer->setGeometry(geometry);
     geometryRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
 
-    // Create material
-    Qt3DExtras::QPhongMaterial* material = new Qt3DExtras::QPhongMaterial();
-    material->setDiffuse(QColor(QRgb(0x928327)));
+    for (int i = 0; i < indices.size(); i += 3) {
+        auto *material = new Qt3DExtras::QPhongMaterial(createdEntity);
+        material->setDiffuse(colors[i / 3]);
 
-    // Add components to entity
-    entity->addComponent(geometryRenderer);
-    entity->addComponent(material);
+        auto *entity = new Qt3DCore::QEntity(createdEntity);
+        entity->addComponent(geometryRenderer);
+        entity->addComponent(material);
+    }
 }
 
 void Viewport3D::createAxisLines(Qt3DCore::QEntity* parent) {
-    struct Line {
-        QVector3D start;
-        QVector3D end;
-        QColor color;
-    };
+//     struct Line {
+//         QVector3D start;
+//         QVector3D end;
+//         QColor color;
+//     };
 
-    QVector<Line> lines = {
-        {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, Qt::red},   // X-axis
-        {{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, Qt::green}, // Y-axis
-        {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, Qt::blue}   // Z-axis
-    };
+//     QVector<Line> lines = {
+//         {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, Qt::red},   // X-axis
+//         {{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, Qt::green}, // Y-axis
+//         {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, Qt::blue}   // Z-axis
+//     };
 
-    for (const Line& line : lines) {
-        QVector<QVector3D> vertices = {line.start, line.end};
-        QVector<unsigned int> indices = {0, 1};
+//     for (const Line& line : lines) {
+//         QVector<QVector3D> vertices = {line.start, line.end};
+//         QVector<unsigned int> indices = {0, 1};
 
-        createEntity(parent, vertices, indices, line.color);
-    }
+//         createEntity(parent, vertices, indices, line.color);
+//     }
 }
