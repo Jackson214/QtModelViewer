@@ -4,29 +4,32 @@
 #include <Qt3DCore/QEntity>
 #include <Qt3DExtras/QCuboidMesh>
 #include <Qt3DExtras/QPhongMaterial>
-#include <Qt3DExtras/QOrbitCameraController>
 #include <Qt3DRender/QCamera>
+#include <QKeyEvent>
 
 Viewport3D::~Viewport3D() {}
 
 Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
-    QWidget *container = QWidget::createWindowContainer(this, parent);
+    mContainer = QWidget::createWindowContainer(this, parent);
+    mContainer->setFocusPolicy(Qt::StrongFocus);
     auto *rootEntity = createScene();
 
     setRootEntity(rootEntity);
 
     // Set up the camera
-    Qt3DRender::QCamera *camera = this->camera();
-    camera->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0, 0, 5.0f));  // Adjust the Z value to zoom out
-    camera->setViewCenter(QVector3D(0, 0, 0));
-
+    mCamera = this->camera();
+    mCamera->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
+    mCamera->setPosition(QVector3D(0, 0, 10.0f));  // Adjust the Z value to zoom out
+    mCamera->setViewCenter(QVector3D(0, 0, 0));
+    
     // Set up the camera controller
-    auto *camController = new Qt3DExtras::QOrbitCameraController(rootEntity);
-    camController->setCamera(camera);
+    mCamController = new Qt3DExtras::QOrbitCameraController(rootEntity);
+    mCamController->setCamera(mCamera);
+    mCamController->setLinearSpeed(50.0f);
+    mCamController->setLookSpeed(10.0f);
 
     QVBoxLayout *layout = new QVBoxLayout(parent);
-    layout->addWidget(container);
+    layout->addWidget(mContainer);
 }
 
 Qt3DCore::QEntity *Viewport3D::createScene() {
@@ -39,6 +42,39 @@ Qt3DCore::QEntity *Viewport3D::createScene() {
     shapeEntity->addComponent(mesh);
     shapeEntity->addComponent(material);
 
+    // Name the cube entity - so we can reference it elsewhere
+    shapeEntity->setObjectName("cubeEntity");
+
     return rootEntity;
+}
+
+void Viewport3D::moveCameraForward(float distance) {
+    // Get the current position and orientation of the camera
+    QVector3D position = mCamera->position();
+    QQuaternion orientation = mCamera->transform()->rotation();
+
+    // Calculate the forward direction vector
+    QVector3D forwardDirection = orientation.rotatedVector(QVector3D(0, 0, -1));
+
+    // Move the camera forward in the direction it is facing
+    position += forwardDirection * distance;
+
+    // Set the new position of the camera
+    mCamera->setPosition(position);
+}
+
+void Viewport3D::moveCameraBackward(float distance) {
+    // Get the current position and orientation of the camera
+    QVector3D position = mCamera->position();
+    QQuaternion orientation = mCamera->transform()->rotation();
+
+    // Calculate the forward direction vector
+    QVector3D forwardDirection = orientation.rotatedVector(QVector3D(0, 0, -1));
+
+    // Move the camera backward in the direction it is facing
+    position -= forwardDirection * distance;
+
+    // Set the new position of the camera
+    mCamera->setPosition(position);
 }
 
