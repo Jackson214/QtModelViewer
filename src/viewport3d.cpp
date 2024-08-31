@@ -50,14 +50,33 @@ Qt3DCore::QEntity *Viewport3D::createScene() {
     // shapeEntity->addComponent(material);
     // shapeEntity->setObjectName("cubeEntity");
 
-    Qt3DCore::QEntity *pyramidEntity = createPyramidEntity(rootEntity);
-    pyramidEntity->setObjectName("pyramidEntity");
+    createPyramidEntity();
 
     return rootEntity;
 }
 
-Qt3DCore::QEntity* Viewport3D::createPyramidEntity(Qt3DCore::QEntity *rootEntity) {
-   
+void Viewport3D::createPyramidEntity() {
+    // Define the vertices of the pyramid
+    QVector<QVector3D> vertices = {
+        { 0.0f,  1.0f,  0.0f}, // Top vertex
+        {-1.0f, -1.0f,  1.0f}, // Front-left vertex
+        { 1.0f, -1.0f,  1.0f}, // Front-right vertex
+        { 1.0f, -1.0f, -1.0f}, // Back-right vertex
+        {-1.0f, -1.0f, -1.0f}  // Back-left vertex
+    };
+
+    // Define the indices for the pyramid faces
+    QVector<unsigned int> indices = {
+        0, 1, 2, // Front face
+        0, 2, 3, // Right face
+        0, 3, 4, // Back face
+        0, 4, 1, // Left face
+        1, 2, 3, // Base face (first triangle)
+        1, 3, 4  // Base face (second triangle)
+    };
+
+    // Create the pyramid entity
+    createEntity(vertices, indices);
 }
 
 void Viewport3D::moveCameraForward(float distance) {
@@ -96,5 +115,71 @@ void Viewport3D::moveCameraBackward(float distance) {
     std::cout << "Setting View Center" << std::endl;
     std::cout << "Camera position: " << position.x() << ", " << position.y() << ", " << position.z() << std::endl;
     mCamera->setViewCenter(QVector3D(0, 0, 0));
+}
+
+
+Qt3DCore::QEntity* Viewport3D::createEntity(const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices) {
+    Qt3DCore::QEntity* entity = new Qt3DCore::QEntity();
+
+    // Create geometry
+    Qt3DCore::QGeometry* geometry = new Qt3DCore::QGeometry(entity);
+
+    // Create vertex data buffer
+    QByteArray vertexBufferData;
+    vertexBufferData.resize(vertices.size() * 3 * sizeof(float));
+    float* rawVertexArray = reinterpret_cast<float*>(vertexBufferData.data());
+    for (int i = 0; i < vertices.size(); ++i) {
+        *rawVertexArray++ = vertices[i].x();
+        *rawVertexArray++ = vertices[i].y();
+        *rawVertexArray++ = vertices[i].z();
+    }
+
+    Qt3DCore::QBuffer* vertexDataBuffer = new Qt3DCore::QBuffer(geometry);
+    vertexDataBuffer->setData(vertexBufferData);
+
+    Qt3DCore::QAttribute* positionAttribute = new Qt3DCore::QAttribute();
+    positionAttribute->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
+    positionAttribute->setVertexBaseType(Qt3DCore::QAttribute::Float);
+    positionAttribute->setVertexSize(3);
+    positionAttribute->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+    positionAttribute->setBuffer(vertexDataBuffer);
+    positionAttribute->setByteStride(3 * sizeof(float));
+    positionAttribute->setCount(vertices.size());
+
+    // Create index data buffer
+    QByteArray indexBufferData;
+    indexBufferData.resize(indices.size() * sizeof(unsigned int));
+    unsigned int* rawIndexArray = reinterpret_cast<unsigned int*>(indexBufferData.data());
+    for (int i = 0; i < indices.size(); ++i) {
+        *rawIndexArray++ = indices[i];
+    }
+
+    Qt3DCore::QBuffer* indexDataBuffer = new Qt3DCore::QBuffer(geometry);
+    indexDataBuffer->setData(indexBufferData);
+
+    Qt3DCore::QAttribute* indexAttribute = new Qt3DCore::QAttribute();
+    indexAttribute->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
+    indexAttribute->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
+    indexAttribute->setBuffer(indexDataBuffer);
+    indexAttribute->setCount(indices.size());
+
+    // Add attributes to geometry
+    geometry->addAttribute(positionAttribute);
+    geometry->addAttribute(indexAttribute);
+
+    // Create geometry renderer
+    Qt3DRender::QGeometryRenderer* geometryRenderer = new Qt3DRender::QGeometryRenderer();
+    geometryRenderer->setGeometry(geometry);
+    geometryRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
+
+    // Create material
+    Qt3DExtras::QPhongMaterial* material = new Qt3DExtras::QPhongMaterial();
+    material->setDiffuse(QColor(QRgb(0x928327)));
+
+    // Add components to entity
+    entity->addComponent(geometryRenderer);
+    entity->addComponent(material);
+
+    return entity;
 }
 
