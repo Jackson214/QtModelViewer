@@ -2,6 +2,9 @@
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QOrbitCameraController>
 #include <QColor>
+#include <Qt3DRender/QRayCaster>
+#include <Qt3DCore/QEntity>
+#include <QMouseEvent>
 #include "Object3D.h"
 
 class Viewport3D : public Qt3DExtras::Qt3DWindow
@@ -14,6 +17,10 @@ public:
 
     void moveCameraForward(float distance);
     void moveCameraBackward(float distance);
+
+    Object3D* getObjectByEntity(Qt3DCore::QEntity* entity);
+
+    void triggerRaycast(const QPointF &mousePosition);
 
 
 private:
@@ -28,4 +35,8 @@ private:
     Qt3DExtras::QOrbitCameraController *mCamController;
     QWidget *mContainer;
     QVector<Object3D> mObjects;
+    Qt3DRender::QRayCaster *mRayCaster;
+
+private slots:
+    void processRaycastHits(Qt3DRender::QRayCaster::Hits hits);
 };

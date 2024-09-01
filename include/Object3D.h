@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QVector>
 #include <QVector3D>
+#include <Qt3DRender/QRayCaster>
 
 class Object3D
 {
@@ -16,10 +17,12 @@ class Object3D
         QVector<unsigned int> getIndices() const;
         QVector<QColor> getOriginalColors() const;
         QVector<std::pair<unsigned long, QColor>> getColorOverrides() const;
+        Qt3DCore::QEntity* getEntityPtr() const;
         void addColorOverride(unsigned long index, QColor color);
         void removeColorOverride(unsigned long index);
         QColor getCurrentColor(unsigned long index) const;
 
+        int getFaceIndexFromHit(const Qt3DRender::QRayCasterHit &hit) const;
 
     private:
         QVector<QVector3D> mVertices;

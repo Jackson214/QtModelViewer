@@ -68,6 +68,8 @@
         "variant": "cpp",
         "qorbitcameracontroller": "cpp",
         "qvboxlayout": "cpp",
-        "qcamera": "cpp"
+        "qcamera": "cpp",
+        "qbuffer": "cpp",
+        "qentity": "cpp"
     }
 }

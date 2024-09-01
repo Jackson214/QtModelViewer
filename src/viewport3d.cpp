@@ -41,8 +41,65 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     mCamController->setLinearSpeed(10.0f);
     mCamController->setLookSpeed(180.0f);
 
+    mRayCaster = new Qt3DRender::QRayCaster(rootEntity);
+    rootEntity->addComponent(mRayCaster);
+
+    // Connect the raycaster's hitsChanged signal to a slot
+    connect(mRayCaster, &Qt3DRender::QRayCaster::hitsChanged, this, &Viewport3D::processRaycastHits);
+
     QVBoxLayout *layout = new QVBoxLayout(parent);
     layout->addWidget(mContainer);
+}
+
+void Viewport3D::triggerRaycast(const QPointF &mousePosition) {
+    // Convert the mouse position to normalized device coordinates
+    QSize viewportSize = this->size();
+    float x = (2.0f * mousePosition.x()) / viewportSize.width() - 1.0f;
+    float y = 1.0f - (2.0f * mousePosition.y()) / viewportSize.height();
+
+    // Set up the ray origin and direction
+    QVector3D rayOrigin = mCamera->position();
+    QVector3D rayDirection = mCamera->viewVector();
+
+    // Set the ray origin and direction
+    mRayCaster->setOrigin(rayOrigin);
+    mRayCaster->setDirection(rayDirection);
+
+    // Trigger the raycaster
+    mRayCaster->trigger();
+}
+
+void Viewport3D::processRaycastHits(Qt3DRender::QAbstractRayCaster::Hits hits) {
+    if (hits.isEmpty()) {
+        return;
+    }
+
+    // Process the hits to find the closest hit
+    Qt3DRender::QRayCasterHit closestHit;
+    bool closestHitFound = false;
+    for (const Qt3DRender::QRayCasterHit &hit : hits) {
+        if (!closestHitFound || hit.distance() < closestHit.distance()) {
+            closestHit = hit;
+            closestHitFound = true;
+        }
+    }
+
+    if (closestHitFound) {
+        // Determine which face was clicked
+        Qt3DCore::QEntity *entity = closestHit.entity();
+        Object3D *object = getObjectByEntity(entity);
+        int faceIndex = object->getFaceIndexFromHit(closestHit);
+        std::cout << "Face clicked: " << faceIndex << std::endl;
+    }
+}
+
+Object3D* Viewport3D::getObjectByEntity(Qt3DCore::QEntity* entity) {
+    for (Object3D object : mObjects) {
+        if (object.getEntityPtr() == entity) {
+            return &object;
+        }
+    }
+    return nullptr;
 }
 
 void Viewport3D::createScene(Qt3DCore::QEntity* rootEntity) {

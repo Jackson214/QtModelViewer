@@ -1,16 +1,24 @@
 #include "Object3D.h"
 
-Object3D::Object3D(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, const QVector<QColor>& colors, const QVector<std::pair<unsigned long, QColor>>& colorOverrides) {
+Object3D::Object3D(Qt3DCore::QEntity* parent, const QVector<QVector3D> vertices, const QVector<unsigned int> indices, const QVector<QColor> colors) {
 	mVertices = vertices;
 	mIndices = indices;
 	mColors = colors;
-	mColorOverrides = colorOverrides;
 	mParent = parent;
 }
 
 Object3D::~Object3D() {}
 
-Qt3DCore::QEntity* getParent() {
+int Object3D::getFaceIndexFromHit(const Qt3DRender::QRayCasterHit &hit) const {
+    // Assuming the hit contains the primitive index
+    return hit.primitiveIndex() / 3; // Each face is made up of 3 vertices
+}
+
+Qt3DCore::QEntity* Object3D::getEntityPtr() const {
+	return mEntityPtr;
+}
+
+Qt3DCore::QEntity* Object3D::getParent() const{
 	return mParent;
 }
 
