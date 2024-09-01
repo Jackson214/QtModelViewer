@@ -93,7 +93,8 @@ void Viewport3D::createPyramidEntity(Qt3DCore::QEntity* parent) {
     };
 
     // Create the pyramid entity
-    createEntity(parent, vertices, indices, colors);
+    Object3D object(parent, vertices, indices, colors);
+    createEntity(object);
 }
 
 void Viewport3D::moveCameraForward(float distance) {
