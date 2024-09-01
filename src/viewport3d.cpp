@@ -19,6 +19,7 @@
 #include <Qt3DRender/QCullFace>
 #include <QLineWidth>
 #include <Qt3DExtras/QCylinderMesh>
+#include <Qt3DExtras/QSphereMesh>
 
 Viewport3D::~Viewport3D() {}
 
@@ -130,6 +131,23 @@ void Viewport3D::processRaycastHits(Qt3DRender::QAbstractRayCaster::Hits hits) {
     lineEntity->addComponent(lineMesh);
     lineEntity->addComponent(lineTransform);
     lineEntity->addComponent(material);
+
+    // Create a red sphere entity for visualizing the hit point
+    Qt3DCore::QEntity *sphereEntity = new Qt3DCore::QEntity(mRootEntity);
+    Qt3DExtras::QSphereMesh *sphereMesh = new Qt3DExtras::QSphereMesh();
+    sphereMesh->setRadius(0.1f); // Small sphere
+
+    Qt3DCore::QTransform *sphereTransform = new Qt3DCore::QTransform();
+    Qt3DExtras::QPhongMaterial *sphereMaterial = new Qt3DExtras::QPhongMaterial();
+    sphereMaterial->setDiffuse(QColor(Qt::red)); // Red color
+    sphereMaterial->setAmbient(QColor(Qt::red));
+
+    sphereTransform->setTranslation(hits.first().worldIntersection());
+
+    sphereEntity->addComponent(sphereMesh);
+    sphereEntity->addComponent(sphereTransform);
+    sphereEntity->addComponent(sphereMaterial);
+    
 }
 
 Object3D* Viewport3D::getObjectByEntity(Qt3DCore::QEntity* entity) {
