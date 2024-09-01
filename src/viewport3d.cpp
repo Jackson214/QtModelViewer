@@ -18,16 +18,17 @@
 #include <Qt3DRender/QDepthTest>
 #include <Qt3DRender/QCullFace>
 #include <QLineWidth>
+#include <Qt3DExtras/QCylinderMesh>
 
 Viewport3D::~Viewport3D() {}
 
 Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
-    auto *rootEntity = new Qt3DCore::QEntity;
+    mRootEntity = new Qt3DCore::QEntity;
     mContainer = QWidget::createWindowContainer(this, parent);
     mContainer->setFocusPolicy(Qt::StrongFocus);
-    createScene(rootEntity);
+    createScene(mRootEntity);
 
-    setRootEntity(rootEntity);
+    setRootEntity(mRootEntity);
 
     // Set up the camera
     mCamera = this->camera();
@@ -36,13 +37,13 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     mCamera->setViewCenter(QVector3D(0, 0, 0));
     
     // Set up the camera controller
-    mCamController = new Qt3DExtras::QOrbitCameraController(rootEntity);
+    mCamController = new Qt3DExtras::QOrbitCameraController(mRootEntity);
     mCamController->setCamera(mCamera);
     mCamController->setLinearSpeed(10.0f);
     mCamController->setLookSpeed(180.0f);
 
-    mRayCaster = new Qt3DRender::QRayCaster(rootEntity);
-    rootEntity->addComponent(mRayCaster);
+    mRayCaster = new Qt3DRender::QRayCaster(mRootEntity);
+    mRootEntity->addComponent(mRayCaster);
 
     // Connect the raycaster's hitsChanged signal to a slot
     connect(mRayCaster, &Qt3DRender::QRayCaster::hitsChanged, this, &Viewport3D::processRaycastHits);
@@ -91,6 +92,44 @@ void Viewport3D::processRaycastHits(Qt3DRender::QAbstractRayCaster::Hits hits) {
         int faceIndex = object->getFaceIndexFromHit(closestHit);
         std::cout << "Face clicked: " << faceIndex << std::endl;
     }
+
+    // Get the first hit result
+    Qt3DRender::QRayCasterHit hit = hits.first();
+    std::cout << "Hit at position: " << hit.worldIntersection().x() << ", " << hit.worldIntersection().y() << ", " << hit.worldIntersection().z() << std::endl;
+
+    // Get the hit position
+    QVector3D hitPosition = hit.worldIntersection();
+
+    // RAY VISUALIZATION
+    // Create a line entity to visualize the ray
+    Qt3DCore::QEntity *lineEntity = new Qt3DCore::QEntity(mRootEntity);
+
+    // Create the geometry for the line (cylinder)
+    Qt3DExtras::QCylinderMesh *lineMesh = new Qt3DExtras::QCylinderMesh();
+    lineMesh->setRadius(0.05f);
+    lineMesh->setLength(1000.0f);
+    lineMesh->setRings(2);
+    lineMesh->setSlices(20);
+
+    Qt3DCore::QTransform *lineTransform = new Qt3DCore::QTransform();
+    QVector3D rayDirection = mRayCaster->direction().normalized();
+    QVector3D upVector(0, 1, 0); // Assuming the cylinder's default orientation is along the Y-axis
+    QQuaternion rotation = QQuaternion::rotationTo(upVector, rayDirection);
+
+    lineTransform->setTranslation(mRayCaster->origin()); // Centered along the ray
+    lineTransform->setRotation(rotation);
+
+    std::cout << "Ray origin: " << mRayCaster->origin().x() << ", " << mRayCaster->origin().y() << ", " << mRayCaster->origin().z() << std::endl;
+    std::cout << "Ray direction: " << mRayCaster->direction().x() << ", " << mRayCaster->direction().y() << ", " << mRayCaster->direction().z() << std::endl;
+
+    // Set up material for the line
+    Qt3DExtras::QPhongMaterial *material = new Qt3DExtras::QPhongMaterial();
+    material->setDiffuse(QColor(QRgb(0xAAAAAA)));
+
+    // Add components to the line entity
+    lineEntity->addComponent(lineMesh);
+    lineEntity->addComponent(lineTransform);
+    lineEntity->addComponent(material);
 }
 
 Object3D* Viewport3D::getObjectByEntity(Qt3DCore::QEntity* entity) {

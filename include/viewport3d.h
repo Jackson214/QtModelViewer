@@ -31,6 +31,7 @@ private:
     void createEntity(Object3D object);
     void createAxisLines(Qt3DCore::QEntity* parent);
 
+    Qt3DCore::QEntity* mRootEntity;
     Qt3DRender::QCamera *mCamera;
     Qt3DExtras::QOrbitCameraController *mCamController;
     QWidget *mContainer;

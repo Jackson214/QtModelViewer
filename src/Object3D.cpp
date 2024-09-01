@@ -10,7 +10,6 @@ Object3D::Object3D(Qt3DCore::QEntity* parent, const QVector<QVector3D> vertices,
 Object3D::~Object3D() {}
 
 int Object3D::getFaceIndexFromHit(const Qt3DRender::QRayCasterHit &hit) const {
-    // Assuming the hit contains the primitive index
     return hit.primitiveIndex() / 3; // Each face is made up of 3 vertices
 }
 

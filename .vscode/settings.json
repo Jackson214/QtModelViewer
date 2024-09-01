@@ -70,6 +70,7 @@
         "qvboxlayout": "cpp",
         "qcamera": "cpp",
         "qbuffer": "cpp",
-        "qentity": "cpp"
+        "qentity": "cpp",
+        "qphongmaterial": "cpp"
     }
 }
