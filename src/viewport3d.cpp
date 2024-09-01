@@ -134,10 +134,9 @@ void Viewport3D::moveCameraBackward(float distance) {
     mCamera->setViewCenter(QVector3D(0, 0, 0));
 }
 
-
-void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D>& vertices, const QVector<unsigned int>& indices, const QVector<QColor>& colors) {
-    auto *newObject = new Qt3DCore::QEntity(parent);
-    for (int i = 0; i < (indices.size()/3); i++) {
+void Viewport3D::createEntity(Object3D object) {
+    auto *newObject = new Qt3DCore::QEntity(object.getParent());
+    for (int i = 0; i < (object.getIndices().size()/3); i++) {
         auto *face = new Qt3DCore::QEntity(newObject);
         auto *geometry = new Qt3DCore::QGeometry(face);
 
@@ -146,7 +145,7 @@ void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D
         vertexData.resize(3 * 3 * sizeof(float)); // 3 vertices per face, 3 coordinates per vertex
         float *vertexDataPtr = reinterpret_cast<float*>(vertexData.data());
         for (int j = 0; j < 3; j++) {
-            const QVector3D &vertex = vertices[indices[(i*3) + j]];
+            const QVector3D &vertex = object.getVertices().at(object.getIndices().at((i*3) + j));
             *vertexDataPtr++ = vertex.x();
             *vertexDataPtr++ = vertex.y();
             *vertexDataPtr++ = vertex.z();
@@ -189,14 +188,15 @@ void Viewport3D::createEntity(Qt3DCore::QEntity* parent, const QVector<QVector3D
         geometryRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
 
         auto *material = new Qt3DExtras::QPhongMaterial(face);
-        material->setAmbient(colors[i]);  // Set ambient color
-        material->setDiffuse(colors[i]);
+        material->setAmbient(object.getCurrentColor(i));  // Set ambient color
+        material->setDiffuse(object.getCurrentColor(i));
         material->setSpecular(Qt::gray); // Set specular color
         material->setShininess(50.0f);   // Set shininess for specular highlights
 
         face->addComponent(geometryRenderer);
         face->addComponent(material);
     }
+    mObjects.push_back(object);
 }
 
 void Viewport3D::createAxisLines(Qt3DCore::QEntity* parent) {

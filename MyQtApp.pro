@@ -11,12 +11,14 @@ INCLUDEPATH += include
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/viewport3d.cpp
+    src/viewport3d.cpp \
+    src/Object3D.cpp
 
 # Header files
 HEADERS += \
     include/mainwindow.h \
-    include/viewport3d.h
+    include/viewport3d.h \
+    include/Object3D.h
 
 # Add OpenGL library
 LIBS += -lGL
