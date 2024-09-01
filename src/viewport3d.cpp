@@ -44,6 +44,7 @@ Viewport3D::Viewport3D(QWidget *parent) : Qt3DExtras::Qt3DWindow() {
     mCamController->setLookSpeed(180.0f);
 
     mRayCaster = new Qt3DRender::QRayCaster(mRootEntity);
+    mRayCaster->setRunMode(Qt3DRender::QRayCaster::SingleShot);
     mRootEntity->addComponent(mRayCaster);
 
     // Connect the raycaster's hitsChanged signal to a slot
@@ -59,12 +60,30 @@ void Viewport3D::triggerRaycast(const QPointF &mousePosition) {
     float x = (2.0f * mousePosition.x()) / viewportSize.width() - 1.0f;
     float y = 1.0f - (2.0f * mousePosition.y()) / viewportSize.height();
 
-    // Set up the ray origin and direction
-    QVector3D rayOrigin = mCamera->position();
-    QVector3D rayDirection = mCamera->viewVector();
+    // Get the projection and view matrices from the camera
+    QMatrix4x4 projectionMatrix = mCamera->projectionMatrix();
+    QMatrix4x4 viewMatrix = mCamera->viewMatrix();
+
+    // Invert the projection and view matrices
+    QMatrix4x4 invertedProjectionMatrix = projectionMatrix.inverted();
+    QMatrix4x4 invertedViewMatrix = viewMatrix.inverted();
+
+    // Unproject the near and far points
+    QVector4D nearPointNDC(x, y, -1.0f, 1.0f);
+    QVector4D farPointNDC(x, y, 1.0f, 1.0f);
+
+    QVector4D nearPointWorld = invertedViewMatrix * (invertedProjectionMatrix * nearPointNDC);
+    QVector4D farPointWorld = invertedViewMatrix * (invertedProjectionMatrix * farPointNDC);
+
+    // Perform perspective divide
+    nearPointWorld /= nearPointWorld.w();
+    farPointWorld /= farPointWorld.w();
+
+    // Calculate the ray direction
+    QVector3D rayDirection = (farPointWorld.toVector3D() - nearPointWorld.toVector3D()).normalized();
 
     // Set the ray origin and direction
-    mRayCaster->setOrigin(rayOrigin);
+    mRayCaster->setOrigin(nearPointWorld.toVector3D());
     mRayCaster->setDirection(rayDirection);
 
     // Trigger the raycaster
@@ -79,10 +98,13 @@ void Viewport3D::processRaycastHits(Qt3DRender::QAbstractRayCaster::Hits hits) {
     // Process the hits to find the closest hit
     Qt3DRender::QRayCasterHit closestHit;
     bool closestHitFound = false;
+    int counter = 0;
     for (const Qt3DRender::QRayCasterHit &hit : hits) {
         if (!closestHitFound || hit.distance() < closestHit.distance()) {
             closestHit = hit;
             closestHitFound = true;
+            std::cout << "hit " << counter << "\tdistance: " << hit.distance() << "\tlocation: " << hit.worldIntersection().x() << ", " << hit.worldIntersection().y() << ", " << hit.worldIntersection().z() << std::endl;
+            counter++;
         }
     }
 
@@ -97,6 +119,7 @@ void Viewport3D::processRaycastHits(Qt3DRender::QAbstractRayCaster::Hits hits) {
     // Get the first hit result
     Qt3DRender::QRayCasterHit hit = hits.first();
     std::cout << "Hit at position: " << hit.worldIntersection().x() << ", " << hit.worldIntersection().y() << ", " << hit.worldIntersection().z() << std::endl;
+    std::cout << "Hit Ditstance: " << hit.distance() << std::endl;
 
     // Get the hit position
     QVector3D hitPosition = hit.worldIntersection();
@@ -120,6 +143,7 @@ void Viewport3D::processRaycastHits(Qt3DRender::QAbstractRayCaster::Hits hits) {
     lineTransform->setTranslation(mRayCaster->origin()); // Centered along the ray
     lineTransform->setRotation(rotation);
 
+    std::cout << "Camera Location: " << mCamera->position().x() << ", " << mCamera->position().y() << ", " << mCamera->position().z() << std::endl;
     std::cout << "Ray origin: " << mRayCaster->origin().x() << ", " << mRayCaster->origin().y() << ", " << mRayCaster->origin().z() << std::endl;
     std::cout << "Ray direction: " << mRayCaster->direction().x() << ", " << mRayCaster->direction().y() << ", " << mRayCaster->direction().z() << std::endl;
 
@@ -142,7 +166,8 @@ void Viewport3D::processRaycastHits(Qt3DRender::QAbstractRayCaster::Hits hits) {
     sphereMaterial->setDiffuse(QColor(Qt::red)); // Red color
     sphereMaterial->setAmbient(QColor(Qt::red));
 
-    sphereTransform->setTranslation(hits.first().worldIntersection());
+    sphereTransform->setTranslation(QVector3D(hit.worldIntersection().x(), hit.worldIntersection().y(), hit.worldIntersection().z()));
+    qDebug() << "Sphere position: " << sphereTransform->translation();
 
     sphereEntity->addComponent(sphereMesh);
     sphereEntity->addComponent(sphereTransform);
@@ -306,7 +331,7 @@ void Viewport3D::createEntity(Object3D object) {
         material->setAmbient(object.getCurrentColor(i));  // Set ambient color
         material->setDiffuse(object.getCurrentColor(i));
         material->setSpecular(Qt::gray); // Set specular color
-        material->setShininess(50.0f);   // Set shininess for specular highlights
+        material->setShininess(10.0f);   // Set shininess for specular highlights
 
         face->addComponent(geometryRenderer);
         face->addComponent(material);
